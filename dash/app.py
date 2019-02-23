@@ -18,29 +18,41 @@ colors = {
 }
 
 # Data
-#df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
-df = pd.read_csv('../data/fake_data.csv')
+df = pd.read_csv('../data/input.csv')
 
 # Static data info
-allyears = list(df['Date'])
+allyears = list(df['date'])
 
-n = 2 # number of renewable energies = 5
+n = 6 # number of renewable energies = 5 + 1 (nuclear)
 renew_energies = list(df.columns)[1:n+1] # n renewable energies
 
-line_color = ['#17BECF', '#7F7F7F', '#33CFA5','#0080FF', '#FF0080', '#3ADF00','#FFBF00']
+fossil_store = 9819478100 # 2017 fossil storage
 
+line_color = ['#17BECF','#7F7F7F','#33CFA5','#0080FF','#FF0080','#3ADF00','#FFBF00','#C255F9']
 
 # init curve data
 data = [go.Scatter( # renew_energies
-                    x=df.Date,
+                    x=df.date,
                     y=df[renew_energies[i]],
                     name = renew_energies[i],
                     line = dict(color = line_color[i]),
                     opacity = 0.8) for i in range(n)
-                ]+[go.Scatter( # sum
-                    x=df.Date,
+                ] + [go.Scatter( # sum new energy supply cap
+                    x=df.date,
                     y=sum(df[renew_energies[i]] for i in range(n)),
                     name = "Sum",
+                    line = dict(color = '#33CFA5'),
+                    opacity = 0.8)
+                ] + [go.Scatter( # demand
+                    x=df.date,
+                    y=df['demand'],
+                    name = "Demand",
+                    line = dict(color = '#33CFA5'),
+                    opacity = 0.8)
+                ] + [go.Scatter( # fossil storage
+                    x=df.date,
+                    y=df['demand'],
+                    name = "Demand",
                     line = dict(color = '#33CFA5'),
                     opacity = 0.8)
                 ]
@@ -200,13 +212,13 @@ def update_graph(check_values,n_clicks,solar_value,hydro_value,year):
     # return new graph
     return {
         'data': [go.Scatter(
-                    x=dff.Date,
+                    x=dff.date,
                     y=dff[check_values[i]],
                     name = check_values[i],
                     line = dict(color = line_color[i]),
                     opacity = 0.8) for i in range(len(check_values))
                 ]+[go.Scatter(
-                    x=dff.Date,
+                    x=dff.date,
                     y=sum(dff[check_values[i]] for i in range(len(check_values))),
                     name = "Sum",
                     line = dict(color = '#33CFA5'),
