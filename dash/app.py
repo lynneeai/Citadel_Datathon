@@ -27,29 +27,23 @@ allyears = list(df['Date'])
 n = 2 # number of renewable energies = 5
 renew_energies = list(df.columns)[1:n+1] # n renewable energies
 
-# update curve
-trace_high = go.Scatter(
-    x=df.Date,
-    y=df['solar'],
-    name = "High",
-    line = dict(color = '#17BECF'),
-    opacity = 0.8)
+line_color = ['#17BECF', '#7F7F7F', '#33CFA5','#0080FF', '#FF0080', '#3ADF00','#FFBF00']
 
-trace_low = go.Scatter(
-    x=df.Date,
-    y=df['Hydro'],
-    name = "Low",
-    line = dict(color = '#7F7F7F'),
-    opacity = 0.8)
 
-trace_sum = go.Scatter(
-    x=df.Date,
-    y=df['Hydro']+df['solar'],
-    name = "Sum",
-    line = dict(color = '#33CFA5'),
-    opacity = 0.8)
-
-data = [trace_high,trace_low, trace_sum]
+# init curve data
+data = [go.Scatter( # renew_energies
+                    x=df.Date,
+                    y=df[renew_energies[i]],
+                    name = renew_energies[i],
+                    line = dict(color = line_color[i]),
+                    opacity = 0.8) for i in range(n)
+                ]+[go.Scatter( # sum
+                    x=df.Date,
+                    y=sum(df[renew_energies[i]] for i in range(n)),
+                    name = "Sum",
+                    line = dict(color = '#33CFA5'),
+                    opacity = 0.8)
+                ]
 
 # Update
 updatemenus = list([
@@ -172,7 +166,6 @@ app.layout = html.Div(
     ]
 )
 
-line_color = ['#17BECF', '#7F7F7F', '#33CFA5']
 
 # Callback
 @app.callback(
