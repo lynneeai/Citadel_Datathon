@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 import dash
 import dash_core_components as dcc
@@ -113,8 +113,6 @@ app.layout = html.Div(
             'color': colors['text']
             }
         ),
-
-        # Checklist
         dcc.Checklist(
             id='energy-checklist',
             options=[
@@ -125,6 +123,42 @@ app.layout = html.Div(
             values=['solar', 'Hydro']
         ),
 
+        html.Div([
+            # Year Button
+            html.Div(dcc.Input(id='year-input', type='text',value = 'Input starting year')),
+            html.Button('Submit', id='button'),
+            # Checklist
+            html.Div([
+                html.P(children='Solar: 0'),
+            ],id='solar-value'),
+
+            # Slider
+            dcc.Slider(
+                id='solar-slider',
+                min=0,
+                max=50,
+                step=0.5,
+                #marks={i: str(i) for i in range(1, 10)},
+                value=0
+            ),
+
+            html.Div([
+                html.P(children='Hydro: 0'),
+            ],id='hydro-value'),
+
+            # Slider
+            dcc.Slider(
+                id='hydro-slider',
+                min=0,
+                max=50,
+                step=0.5,
+                #marks={i: str(i) for i in range(1, 10)},
+                value=0
+            ),
+
+        ],style={'columnCount': 1,'width':'200px','position': 'relative',
+                'left': '5px'}),
+
         # Graph
         dcc.Graph(
             id='simulator-graph',
@@ -132,24 +166,7 @@ app.layout = html.Div(
                 'data': data,
                 'layout': layout
             }
-        ),
-
-        # Text
-        dcc.Input(
-            id='solar-year',
-            value='Year', 
-            type='text'
-        ),
-
-        # Slider
-        dcc.Slider(
-            id='solar-slider',
-            min=0,
-            max=10,
-            step=0.01,
-            marks={i: str(i) for i in range(1, 10)},
-            value=0
-        ),
+        )
 
     ]
 )
@@ -159,17 +176,21 @@ line_color = ['#17BECF', '#7F7F7F', '#33CFA5']
 # Callback
 @app.callback(
     dash.dependencies.Output('simulator-graph', 'figure'),
-    [dash.dependencies.Input('energy-checklist', 'values')])
-def update_graph(check_values):
+    [dash.dependencies.Input('energy-checklist', 'values'),
+     dash.dependencies.Input('button', 'n_clicks'),
+     dash.dependencies.Input('solar-slider', 'value'),
+     dash.dependencies.Input('hydro-slider', 'value'),
+     ],
+    [dash.dependencies.State('year-input', 'value')])
+def update_graph(check_values,n_clicks,solar_value,hydro_value,year):
 
     # copy of data
     dff = df.copy()
-    years = [1990]*n
-    rates = [20]*n
 
-    # DEBUG
-    print(dff[renew_energies[0]][0:10])
+    years = [year]*n
+    rates = [solar_value/100,hydro_value/100]
 
+    print(year)
     # compute adjusted
     starts = [allyears.index(i) for i in years]
     lists = [dff[i].tolist() for i in renew_energies]
@@ -181,9 +202,6 @@ def update_graph(check_values):
         dff.drop([e], axis=1, inplace = True)
         dff[e] = lists[idx]
         idx += 1
-
-    # DEBUG
-    print(dff[renew_energies[0]][0:10])
 
     # return new graph
     return {
@@ -202,6 +220,20 @@ def update_graph(check_values):
                 ],
         'layout': layout
     }
+
+@app.callback(
+    Output(component_id='solar-value', component_property='children'),
+    [Input(component_id='solar-slider', component_property='value')]
+)
+def update_output_div(input_value):
+    return 'Solar: {}%'.format(input_value)
+
+@app.callback(
+    Output(component_id='hydro-value', component_property='children'),
+    [Input(component_id='hydro-slider', component_property='value')]
+)
+def update_output_div(input_value):
+    return 'Solar: {}%'.format(input_value)
 
 # Main
 if __name__ == '__main__':
