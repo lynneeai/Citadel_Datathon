@@ -23,6 +23,7 @@ df = pd.read_csv('../data/fake_data.csv')
 
 # Static data info
 allyears = list(df['Date'])
+
 n = 2 # number of renewable energies = 5
 renew_energies = list(df.columns)[1:n+1] # n renewable energies
 
@@ -125,7 +126,7 @@ app.layout = html.Div(
 
         html.Div([
             # Year Button
-            html.Div(dcc.Input(id='year-input', type='text',value = 'Input starting year')),
+            html.Div(dcc.Input(id='year-input', type='text',value = '2000')),
             html.Button('Submit', id='button'),
             # Checklist
             html.Div([
@@ -186,11 +187,11 @@ def update_graph(check_values,n_clicks,solar_value,hydro_value,year):
 
     # copy of data
     dff = df.copy()
+    year = int(year)
 
     years = [year]*n
     rates = [solar_value/100,hydro_value/100]
 
-    print(year)
     # compute adjusted
     starts = [allyears.index(i) for i in years]
     lists = [dff[i].tolist() for i in renew_energies]
