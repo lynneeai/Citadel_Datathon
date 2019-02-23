@@ -133,7 +133,7 @@ app.layout = html.Div(
             max=10,
             step=0.01,
             marks={i: str(i) for i in range(1, 10)},
-            value=0,
+            value=0
         )
     ]
 )
