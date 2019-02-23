@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 import dash
 import dash_core_components as dcc
@@ -105,8 +105,6 @@ app.layout = html.Div(
             'color': colors['text']
             }
         ),
-
-        # Checklist
         dcc.Checklist(
             id='energy-checklist',
             options=[
@@ -117,6 +115,43 @@ app.layout = html.Div(
             values=['AAPL.High', 'AAPL.Low']
         ),
 
+        html.Div([
+            # Checklist
+            html.Div([
+                html.P(children='Solar: 0'),
+            ],id='solar-value'),
+
+            # Slider
+            dcc.Slider(
+                id='solar-slider',
+                min=0,
+                max=10,
+                step=0.5,
+                #marks={i: str(i) for i in range(1, 10)},
+                value=0
+            ),
+
+            html.Div([
+                html.P(children='Hydro: 0'),
+            ],id='hydro-value'),
+
+            # Slider
+            dcc.Slider(
+                id='hydro-slider',
+                min=0,
+                max=10,
+                step=0.5,
+                #marks={i: str(i) for i in range(1, 10)},
+                value=0
+            ),
+
+
+
+        ],style={'columnCount': 1,'width':'100px','position': 'relative',
+                'left': '5px'}),
+
+
+
         # Graph
         dcc.Graph(
             id='simulator-graph',
@@ -126,15 +161,7 @@ app.layout = html.Div(
             }
         ),
 
-        # Slider
-        dcc.Slider(
-            id='solar-slider',
-            min=0,
-            max=10,
-            step=0.01,
-            marks={i: str(i) for i in range(1, 10)},
-            value=0
-        )
+
     ]
 )
 
@@ -162,6 +189,19 @@ def update_graph(check_values):
                 ],
         'layout': layout
     }
+@app.callback(
+    Output(component_id='solar-value', component_property='children'),
+    [Input(component_id='solar-slider', component_property='value')]
+)
+def update_output_div(input_value):
+    return 'Solar: {}%'.format(input_value)
+
+@app.callback(
+    Output(component_id='hydro-value', component_property='children'),
+    [Input(component_id='hydro-slider', component_property='value')]
+)
+def update_output_div(input_value):
+    return 'Solar: {}%'.format(input_value)
 
 # Main
 if __name__ == '__main__':
