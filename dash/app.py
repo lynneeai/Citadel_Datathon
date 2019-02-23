@@ -22,7 +22,7 @@ colors = {
 df = pd.read_csv('../data/fake_data.csv')
 
 # Static data info
-years = list(df['Date'])
+allyears = list(df['Date'])
 n = 2 # number of renewable energies = 5
 renew_energies = list(df.columns)[1:n+1] # n renewable energies
 
@@ -164,11 +164,14 @@ def update_graph(check_values):
 
     # copy of data
     dff = df.copy()
-    years = [1969]*n
-    rates = [0.05]*n
+    years = [1990]*n
+    rates = [20]*n
+
+    # DEBUG
+    print(dff[renew_energies[0]][0:10])
 
     # compute adjusted
-    starts = [years.index(i) for i in years]
+    starts = [allyears.index(i) for i in years]
     lists = [dff[i].tolist() for i in renew_energies]
     lists = [(lists[j][0:starts[j]] + [ i * (1 + rates[j]) for i in lists[j][starts[j]:]]) for j in range((n))]
     idx = 0
@@ -178,6 +181,9 @@ def update_graph(check_values):
         dff.drop([e], axis=1, inplace = True)
         dff[e] = lists[idx]
         idx += 1
+
+    # DEBUG
+    print(dff[renew_energies[0]][0:10])
 
     # return new graph
     return {
