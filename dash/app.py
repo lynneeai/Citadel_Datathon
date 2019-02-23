@@ -18,24 +18,32 @@ colors = {
 }
 
 # Data
-df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
+#df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv")
+df = pd.read_csv('../data/fake_data.csv')
+
+# Static data info
+years = list(df['Date'])
+n = 2 # number of renewable energies = 5
+renew_energies = list(df.columns)[1:n+1] # n renewable energies
+
+# update curve
 trace_high = go.Scatter(
     x=df.Date,
-    y=df['AAPL.High'],
+    y=df['solar'],
     name = "High",
     line = dict(color = '#17BECF'),
     opacity = 0.8)
 
 trace_low = go.Scatter(
     x=df.Date,
-    y=df['AAPL.Low'],
+    y=df['Hydro'],
     name = "Low",
     line = dict(color = '#7F7F7F'),
     opacity = 0.8)
 
 trace_sum = go.Scatter(
     x=df.Date,
-    y=df['AAPL.Low']+df['AAPL.High'],
+    y=df['Hydro']+df['solar'],
     name = "Sum",
     line = dict(color = '#33CFA5'),
     opacity = 0.8)
@@ -108,14 +116,17 @@ app.layout = html.Div(
         dcc.Checklist(
             id='energy-checklist',
             options=[
-                {'label': 'Solar', 'value': 'AAPL.High'},
-                {'label': 'Hydro', 'value': 'AAPL.Low'},
+                {'label': 'Solar', 'value': 'solar'},
+                {'label': 'Hydro', 'value': 'Hydro'},
                 {'label': 'Sum', 'value': 'S'}
             ],
-            values=['AAPL.High', 'AAPL.Low']
+            values=['solar', 'Hydro']
         ),
 
         html.Div([
+            # Year Button
+            html.Div(dcc.Input(id='year-input', type='text',value = 'Input starting year')),
+            html.Button('Submit', id='button'),
             # Checklist
             html.Div([
                 html.P(children='Solar: 0'),
@@ -125,7 +136,7 @@ app.layout = html.Div(
             dcc.Slider(
                 id='solar-slider',
                 min=0,
-                max=10,
+                max=50,
                 step=0.5,
                 #marks={i: str(i) for i in range(1, 10)},
                 value=0
@@ -139,7 +150,7 @@ app.layout = html.Div(
             dcc.Slider(
                 id='hydro-slider',
                 min=0,
-                max=10,
+                max=50,
                 step=0.5,
                 #marks={i: str(i) for i in range(1, 10)},
                 value=0
@@ -147,7 +158,7 @@ app.layout = html.Div(
 
 
 
-        ],style={'columnCount': 1,'width':'100px','position': 'relative',
+        ],style={'columnCount': 1,'width':'200px','position': 'relative',
                 'left': '5px'}),
 
 
@@ -162,6 +173,17 @@ app.layout = html.Div(
         ),
 
 
+
+        # # Slider
+        # dcc.Slider(
+        #     id='solar-slider',
+        #     min=0,
+        #     max=10,
+        #     step=0.01,
+        #     marks={i: str(i) for i in range(1, 10)},
+        #     value=0
+        # ),
+
     ]
 )
 
@@ -170,25 +192,53 @@ line_color = ['#17BECF', '#7F7F7F', '#33CFA5']
 # Callback
 @app.callback(
     dash.dependencies.Output('simulator-graph', 'figure'),
-    [dash.dependencies.Input('energy-checklist', 'values')])
-def update_graph(check_values):
+    [dash.dependencies.Input('energy-checklist', 'values'),
+     dash.dependencies.Input('button', 'n_clicks'),
+     dash.dependencies.Input('solar-slider', 'value'),
+     dash.dependencies.Input('hydro-slider', 'value'),
+     ],
+    [dash.dependencies.State('year-input', 'value')])
+def update_graph(check_values,n_clicks,solar_value,hydro_value,year):
 
+    # copy of data
+    dff = df.copy()
+    years = [year]*n
+    rates = [solar_value/100,hydro_value/100]
+
+    print(year)
+    # compute adjusted
+    starts = [years.index(i) for i in years]
+    lists = [dff[i].tolist() for i in renew_energies]
+    lists = [(lists[j][0:starts[j]] + [ i * (1 + rates[j]) for i in lists[j][starts[j]:]]) for j in range((n))]
+    idx = 0
+
+    # update values
+    for e in renew_energies:
+        dff.drop([e], axis=1, inplace = True)
+        dff[e] = lists[idx]
+        idx += 1
+
+    
+
+    #print(dff[:10])
+    # return new graph
     return {
         'data': [go.Scatter(
-                    x=df.Date,
-                    y=df[check_values[i]],
+                    x=dff.Date,
+                    y=dff[check_values[i]],
                     name = check_values[i],
                     line = dict(color = line_color[i]),
                     opacity = 0.8) for i in range(len(check_values))
                 ]+[go.Scatter(
-                    x=df.Date,
-                    y=sum(df[check_values[i]] for i in range(len(check_values))),
+                    x=dff.Date,
+                    y=sum(dff[check_values[i]] for i in range(len(check_values))),
                     name = "Sum",
                     line = dict(color = '#33CFA5'),
                     opacity = 0.8)
                 ],
         'layout': layout
     }
+
 @app.callback(
     Output(component_id='solar-value', component_property='children'),
     [Input(component_id='solar-slider', component_property='value')]
